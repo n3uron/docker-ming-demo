@@ -1,0 +1,67 @@
+services:
+  n3uron:
+    image: n3uronhub/n3uron:v1.21.5
+    hostname: node01
+    ports:
+      - 8003:8003 # HTTP WebUI
+      - 8443:8443 # HTTPS WebUI
+      - 8004:8004 # HTTP WebVision
+      - 8444:8444 # HTTPS WebVision
+      - 3001:3001 # Inbound Links
+    volumes:
+      - n3_config:/opt/n3uron/config
+      - n3_data:/opt/n3uron/data
+      - n3_licenses:/opt/n3uron/licenses
+      - n3_log:/opt/n3uron/log
+    restart: always
+
+  mqtt:
+    image: eclipse-mosquitto:1.6
+    ports:
+      - 1883:1883
+    restart: always
+
+  telegraf:
+    image: telegraf:1.27
+    environment:
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=iXm3eMP5ioUUntSZuHYWzjJPT
+    volumes:
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    restart: always
+
+  influx:
+    image: influxdb:2.7
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=n3urondemo
+      - DOCKER_INFLUXDB_INIT_ORG=N3uron
+      - DOCKER_INFLUXDB_INIT_BUCKET=demo
+      - DOCKER_INFLUXDB_INIT_RETENTION=1w
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=iXm3eMP5ioUUntSZuHYWzjJPT
+    ports:
+      - 8086:8086
+    volumes:
+      - influx_config:/etc/influxdb2
+      - influx_data:/var/lib/influxdb2
+    restart: always
+
+  grafana:
+    image: grafana/grafana-oss:10.0.1
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=n3uron
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: always
+
+volumes:
+  n3_config:
+  n3_data:
+  n3_licenses:
+  n3_log:
+  influx_config:
+  influx_data:
+  grafana_data:
